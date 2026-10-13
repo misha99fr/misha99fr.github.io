@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bobik Shop</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@600;700&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2e8d8;
+  --card:#fff9ec;
+  --ink:#2a1a12;
+  --muted:#7a6551;
+  --orange:#f2ac3d;
+  --brown:#a8683a;
+  --green:#3aa56b;
+  --green-soft:#d9f2e2;
+  --red:#c8402f;
+  --purple:#7a5cc4;
+  --line:2px solid var(--ink);
+  --shadow:4px 4px 0 var(--ink);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:'Nunito',system-ui,sans-serif;font-weight:700;
+  display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);
+}
+h1,h2,h3{font-family:'Comfortaa','Nunito',sans-serif;margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--purple);outline-offset:2px}
+
+main{flex:1;overflow-y:auto;padding:18px 16px 24px;max-width:520px;width:100%;margin:0 auto}
+.page-title{font-size:26px;margin:4px 4px 16px;display:flex;align-items:center;gap:10px}
+
+/* карточки */
+.card{
+  background:var(--card);border:var(--line);border-radius:22px;
+  box-shadow:var(--shadow);padding:16px;margin:0 4px 20px;
+}
+.card .hint,.hint{font-size:12px;color:var(--muted);font-weight:700;line-height:1.35}
+
+/* кнопки */
+.btn{
+  width:100%;padding:14px 16px;border:var(--line);border-radius:16px;
+  background:var(--card);font-weight:900;font-size:15px;
+  box-shadow:var(--shadow);transition:transform .08s,box-shadow .08s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.btn.primary{background:var(--orange)}
+.btn.danger{color:var(--red)}
+.btn[disabled]{opacity:.55;pointer-events:none}
+
+/* ---------- главная ---------- */
+.brand{display:flex;align-items:center;gap:14px;margin:2px 4px 18px}
+.logo{
+  width:62px;height:62px;border:var(--line);border-radius:18px;background:var(--card);
+  box-shadow:3px 3px 0 var(--ink);display:grid;place-items:center;font-size:34px;flex:none
+}
+.brand .t{flex:1;min-width:0}
+.brand .t h1{font-size:23px;line-height:1.1}
+.brand .t span{display:block;font-size:11.5px;letter-spacing:.14em;color:var(--muted);font-weight:900;margin-top:4px}
+.gear{
+  width:46px;height:46px;border:var(--line);border-radius:14px;background:var(--card);
+  box-shadow:3px 3px 0 var(--ink);font-size:22px;display:grid;place-items:center;flex:none
+}
+.gear:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+
+.rate{
+  position:relative;overflow:hidden;border:var(--line);border-radius:26px;box-shadow:var(--shadow);
+  margin:0 4px 20px;padding:20px 20px 18px;color:#fff9ec;
+  background:linear-gradient(90deg,#c68a52 0 38%,#b97642 38% 72%,#c68a52 72% 100%);
+}
+.rate .yen{
+  position:absolute;right:6px;top:-18px;font-size:170px;line-height:1;font-weight:900;
+  color:#fff9ec;opacity:.2;font-family:'Nunito',sans-serif;pointer-events:none
+}
+.rate .lbl{font-size:12px;letter-spacing:.14em;font-weight:900}
+.rate .num{font-size:48px;font-weight:800;line-height:1.1;margin:10px 0 12px;font-family:'Nunito',sans-serif}
+.rate .num small{font-size:17px;font-weight:800;margin-left:6px;letter-spacing:.04em}
+.rate .fee{font-size:13px;font-weight:900;position:relative}
+
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:16px 14px;padding:0 4px;margin-bottom:20px}
+.tile{
+  text-align:left;background:var(--card);border:var(--line);border-radius:22px;box-shadow:var(--shadow);
+  padding:16px 14px 14px;min-height:122px;display:flex;flex-direction:column;justify-content:flex-end;
+  position:relative;transition:transform .08s,box-shadow .08s
+}
+.tile:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+.tile .ic{position:absolute;top:14px;left:14px;font-size:30px;line-height:1}
+.tile b{font-size:16px;line-height:1.2;display:block}
+.tile span.s{font-size:12px;color:var(--muted);margin-top:3px;display:block;line-height:1.25}
+.tile .badge{top:10px;right:10px}
+.cond h3{font-size:17px;margin-bottom:10px}
+.cond ul{margin:0;padding:0;list-style:none}
+.cond li{font-size:13.5px;line-height:1.4;padding:7px 0;border-bottom:2px dashed #cdbba0;display:flex;gap:10px}
+.cond li:last-child{border-bottom:none;padding-bottom:0}
+
+/* ---------- каталог ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 14px;padding:0 4px}
+.item{
+  background:var(--card);border:var(--line);border-radius:20px;box-shadow:var(--shadow);
+  padding:12px;display:flex;flex-direction:column;gap:8px;position:relative;
+}
+.item .pic{
+  height:92px;border:var(--line);border-radius:14px;display:grid;place-items:center;
+  font-size:50px;background:repeating-linear-gradient(135deg,#fbefd2 0 10px,#fff6e0 10px 20px);
+}
+.item h3{font-size:14px;line-height:1.2;min-height:34px}
+.item .desc{font-size:11.5px;color:var(--muted);line-height:1.3;min-height:30px}
+.item .row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto}
+.price{font-weight:900;font-size:17px;line-height:1.15}
+.price small{display:block;font-size:11px;color:var(--muted);font-weight:700}
+.price s{font-size:11px;color:var(--muted);font-weight:700}
+.tag{
+  position:absolute;top:-9px;right:10px;background:var(--orange);border:var(--line);
+  border-radius:999px;padding:2px 9px;font-size:11px;font-weight:900;
+}
+.add{
+  width:38px;height:38px;border:var(--line);border-radius:12px;background:var(--orange);
+  font-size:22px;font-weight:900;line-height:1;box-shadow:2px 2px 0 var(--ink);
+}
+.add:active{transform:translate(2px,2px);box-shadow:none}
+
+/* ---------- корзина ---------- */
+.line{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:2px dashed #cdbba0}
+.line:last-of-type{border-bottom:none}
+.line .em{font-size:30px;width:44px;height:44px;border:var(--line);border-radius:12px;display:grid;place-items:center;background:#fbefd2;flex:none}
+.line .meta{flex:1;min-width:0}
+.line .meta b{display:block;font-size:14px;line-height:1.2}
+.line .meta span{font-size:12px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:28px;height:28px;border:var(--line);border-radius:9px;background:var(--card);font-weight:900;line-height:1}
+.qty span{min-width:16px;text-align:center;font-weight:900}
+.sum{display:flex;justify-content:space-between;font-size:15px;padding:5px 0}
+.sum.total{font-size:20px;font-weight:900;border-top:2px dashed #cdbba0;margin-top:8px;padding-top:12px}
+.empty{text-align:center;padding:30px 10px}
+.empty .big{font-size:56px}
+.empty p{color:var(--muted);margin:8px 0 18px}
+
+/* ---------- заказы (билетик) ---------- */
+.ticket{
+  background:var(--card);border:var(--line);border-radius:22px;box-shadow:var(--shadow);
+  margin:0 4px 22px;padding:16px;position:relative;
+}
+.ticket::before,.ticket::after{
+  content:'';position:absolute;top:58px;width:18px;height:18px;border-radius:50%;
+  background:var(--bg);border:var(--line);
+}
+.ticket::before{left:-11px;clip-path:inset(0 0 0 50%)}
+.ticket::after{right:-11px;clip-path:inset(0 50% 0 0)}
+.ticket .head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:14px;border-bottom:2px dashed #b8a48a}
+.ticket .head h3{color:var(--muted);font-size:17px}
+.ticket .head b{font-family:'Comfortaa';font-size:17px;color:var(--brown)}
+.ticket .body{text-align:center;padding:14px 0 4px;font-size:13px;line-height:1.4}
+.ticket .names{margin:6px 0 14px;font-size:13px;text-align:left}
+.ticket .names div{padding:2px 0}
+.route{display:flex;align-items:center;gap:8px;font-weight:900;font-size:13px;margin:6px 0 14px}
+.route .bar{flex:1;height:5px;position:relative;border-radius:3px;background:repeating-linear-gradient(90deg,var(--ink) 0 6px,transparent 6px 12px)}
+.route .bar i{position:absolute;left:0;top:0;height:100%;background:var(--green);border-radius:3px;transition:width .6s}
+.route .bar em{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;background:var(--green);border:var(--line);transform:translate(-50%,-50%);transition:left .6s}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;border:var(--line);border-radius:999px;
+  padding:7px 16px;font-weight:900;font-size:13px;background:var(--green-soft);box-shadow:2px 2px 0 var(--ink)
+}
+.center{text-align:center}
+
+/* ---------- калькулятор / настройки ---------- */
+.about p{margin:0 0 10px;font-size:14px;line-height:1.45}
+.about .stamp{
+  display:inline-block;transform:rotate(-4deg);border:3px solid var(--red);color:var(--red);
+  border-radius:10px;padding:4px 12px;font-family:'Comfortaa';font-weight:700;font-size:15px;margin:6px 0 4px
+}
+.calc-res{background:#fbefd2;border:var(--line);border-radius:16px;padding:12px 14px;margin-top:16px}
+
+/* ---------- нижнее меню ---------- */
+nav{
+  background:var(--card);border-top:var(--line);display:flex;justify-content:space-around;
+  padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px));
+}
+nav button{
+  background:none;border:2px solid transparent;border-radius:16px;padding:6px 12px;
+  display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:800;position:relative;
+}
+nav button .ic{font-size:22px;line-height:1}
+nav button.on{background:linear-gradient(#b87745,#8f5530);color:#fff9ec;border-color:var(--ink);box-shadow:var(--shadow)}
+.badge{
+  position:absolute;top:-4px;right:2px;min-width:19px;height:19px;border-radius:999px;background:var(--red);
+  color:#fff;border:2px solid var(--ink);font-size:11px;display:grid;place-items:center;padding:0 4px
+}
+.footer{text-align:center;font-size:12px;color:var(--muted);padding:6px 0 0;background:var(--bg)}
+
+/* ---------- модалка ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(42,26,18,.55);display:none;align-items:flex-end;justify-content:center;z-index:20
+}
+.overlay.show{display:flex}
+.sheet{
+  background:var(--bg);border:var(--line);border-bottom:none;border-radius:26px 26px 0 0;width:100%;max-width:520px;
+  padding:20px 18px calc(22px + env(safe-area-inset-bottom,0px));max-height:92vh;overflow-y:auto;
+  animation:up .25s ease-out
+}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet h2{font-size:22px;margin-bottom:14px}
+.cc{
+  background:linear-gradient(135deg,#f2ac3d,#e0872c);border:var(--line);border-radius:20px;box-shadow:var(--shadow);
+  padding:16px;margin-bottom:18px;min-height:130px;display:flex;flex-direction:column;justify-content:space-between
+}
+.cc .top{display:flex;justify-content:space-between;font-family:'Comfortaa';font-size:14px}
+.cc .num{font-family:'Comfortaa';font-size:20px;letter-spacing:2px}
+.cc .bot{display:flex;justify-content:space-between;font-size:13px}
+label{display:block;font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin:12px 0 6px;font-weight:900}
+input{
+  width:100%;padding:13px 14px;border:var(--line);border-radius:14px;background:var(--card);
+  font:inherit;font-size:16px;font-weight:800;color:var(--ink)
+}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.steps{margin:6px 0 4px;padding:0;list-style:none}
+.steps li{display:flex;gap:10px;align-items:center;padding:9px 0;font-size:14px;opacity:.35;transition:opacity .3s}
+.steps li.on{opacity:1}
+.steps li .dot{width:22px;height:22px;border:var(--line);border-radius:50%;display:grid;place-items:center;font-size:12px;background:var(--card);flex:none}
+.steps li.done .dot{background:var(--green);color:#fff}
+.steps li.fail .dot{background:var(--red);color:#fff}
+.result{text-align:center;padding:6px 0}
+.result .big{font-size:64px;animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.2) rotate(-20deg)}to{transform:none}}
+.result p{font-size:14px;line-height:1.45;margin:8px 0 18px}
+.faq button{
+  width:100%;text-align:left;background:var(--card);border:var(--line);border-radius:14px;padding:12px 14px;
+  font-weight:800;font-size:14px;margin-bottom:10px;box-shadow:3px 3px 0 var(--ink)
+}
+.bubble{
+  background:#fbefd2;border:var(--line);border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:14px;line-height:1.45;margin:6px 0 14px
+}
+
+.toast{
+  position:fixed;left:50%;bottom:96px;transform:translate(-50%,20px);background:var(--ink);color:var(--card);
+  padding:10px 16px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:30;white-space:nowrap
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+canvas#fx{position:fixed;inset:0;pointer-events:none;z-index:40}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<main id="view"></main>
+
+<div class="footer">@bobik_shop · все платежи понарошку</div>
+<nav id="nav"></nav>
+
+<div class="overlay" id="overlay"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<canvas id="fx"></canvas>
+
+<script>
+/* ============ Telegram ============ */
+const tg = window.Telegram && window.Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); try{ tg.setHeaderColor('#f2e8d8'); tg.setBackgroundColor('#f2e8d8'); }catch(e){} }
+const haptic = (t='light') => { try{ tg && tg.HapticFeedback.impactOccurred(t) }catch(e){} };
+const hapticOk = () => { try{ tg && tg.HapticFeedback.notificationOccurred('success') }catch(e){} };
+
+/* ============ Настройки магазина ============ */
+const RATE = 13.15;        // курс юаня, ₽ за 1 ¥
+const FEE_PCT = 0.07;      // комиссия сервиса 7%
+const FEE_MIN = 350;       // минимум 350 ₽
+
+/* ============ Товары (цены в юанях) ============ */
+const PRODUCTS = [
+  {id:1, emoji:'💨', name:'Воздух из Китая', desc:'Запечатан на заводе. Вскрывать на свой страх и риск.', price:9, old:13, tag:'хит'},
+  {id:2, emoji:'🧦', name:'Левый носок', desc:'Правый уже не найти. Продаётся без пары.', price:17},
+  {id:3, emoji:'🧱', name:'Кирпич премиум', desc:'Красный, твёрдый, надёжный. Как характер.', price:130, tag:'вес'},
+  {id:4, emoji:'🕳️', name:'Дыра от бублика', desc:'Самая ценная часть. Доставка в пустой коробке.', price:30},
+  {id:5, emoji:'🐈', name:'Кот в мешке', desc:'Кота нет. Мешок есть. Всё честно.', price:260, old:350, tag:'-25%'},
+  {id:6, emoji:'📦', name:'Пустая коробка', desc:'Для тех, кто любит распаковывать.', price:43},
+  {id:7, emoji:'🧠', name:'Совет от Бобика', desc:'«Не надо». Универсальный совет на все случаи.', price:68},
+  {id:8, emoji:'🫙', name:'Банка хорошего настроения', desc:'Внутри ничего. Но с любовью.', price:109},
+  {id:9, emoji:'🪙', name:'Билет в никуда', desc:'Рейс по расписанию. Расписания нет.', price:470, tag:'VIP'},
+  {id:10, emoji:'🥄', name:'Ложка (нет)', desc:'Ложки нет. Это и есть товар.', price:1337}
+];
+const byId = id => PRODUCTS.find(p=>p.id===id);
+const fmt  = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+const fmtY = n => '¥' + n.toLocaleString('ru-RU');
+const toRub = cny => Math.round(cny * RATE);
+const feeFor = goodsRub => goodsRub > 0 ? Math.max(FEE_MIN, Math.round(goodsRub * FEE_PCT)) : 0;
+const rateStr = RATE.toFixed(2);
+
+/* ============ Состояние (localStorage) ============ */
+const load = (k,d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch(e){ return d } };
+const save = (k,v) => { try{ localStorage.setItem(k, JSON.stringify(v)) }catch(e){} };
+let cart = load('bobik_cart', {});
+let orders = load('bobik_orders', []);
+let tab = 'home';
+
+const cartCount = () => Object.values(cart).reduce((a,b)=>a+b,0);
+const cartCny   = () => Object.entries(cart).reduce((s,[id,q])=>s+byId(+id).price*q,0);
+const cartGoods = () => toRub(cartCny());
+const cartFee   = () => feeFor(cartGoods());
+const cartTotal = () => cartGoods() + cartFee();
+
+/* ============ Рендер ============ */
+const $ = s => document.querySelector(s);
+const view = $('#view');
+
+function renderNav(){
+  const tabs = [['home','🏠','Главная'],['catalog','🛍️','Каталог'],['cart','🧺','Корзина'],['orders','📋','Мои заказы']];
+  $('#nav').innerHTML = tabs.map(([k,ic,t]) =>
+    `<button class="${tab===k?'on':''}" data-tab="${k}" aria-label="${t}">
+      <span class="ic">${ic}</span>${t}
+      ${k==='cart'&&cartCount()?`<span class="badge">${cartCount()}</span>`:''}
+    </button>`).join('');
+}
+
+function render(){
+  renderNav();
+  ({home:renderHome, catalog:renderCatalog, cart:renderCart, orders:renderOrders, calc:renderCalc, about:renderAbout}[tab])();
+}
+
+function renderHome(){
+  const n = orders.length;
+  view.innerHTML = `
+    <div class="brand">
+      <div class="logo">🐶</div>
+      <div class="t"><h1>Bobik Shop</h1><span>МАГАЗИН ПОНАРОШКУ</span></div>
+      <button class="gear" data-tab="about" aria-label="Настройки">⚙️</button>
+    </div>
+
+    <div class="rate">
+      <div class="yen">¥</div>
+      <div class="lbl">КУРС ЮАНЯ СЕГОДНЯ</div>
+      <div class="num">${rateStr}<small>₽ / ¥</small></div>
+      <div class="fee">Комиссия сервиса ${Math.round(FEE_PCT*100)}% · минимум ${FEE_MIN} ₽</div>
+    </div>
+
+    <div class="tiles">
+      <button class="tile" data-tab="catalog"><span class="ic">🛍️</span><b>Каталог</b><span class="s">Воздух, носки, кирпичи</span></button>
+      <button class="tile" data-tab="calc"><span class="ic">🧮</span><b>Калькулятор</b><span class="s">Товар + доставка</span></button>
+      <button class="tile" data-tab="orders"><span class="ic">📋</span><b>Мои заказы</b><span class="s">${n?`Заказов: ${n}`:'Статусы и суммы'}</span></button>
+      <button class="tile" data-manager><span class="ic">💬</span><b>Менеджер</b><span class="s">Задать вопрос</span></button>
+    </div>
+
+    <div class="card cond">
+      <h3>📦 Условия доставки</h3>
+      <ul>
+        <li><span>⏱️</span><span>Доставка из Китая в никуда занимает около 140 секунд.</span></li>
+        <li><span>💳</span><span>Оплата понарошку: карта не проверяется, деньги не списываются.</span></li>
+        <li><span>↩️</span><span>Возврат не нужен: товар и так не приедет.</span></li>
+      </ul>
+    </div>`;
+}
+
+function renderCatalog(){
+  view.innerHTML = `
+    <h1 class="page-title">🛍️ Каталог</h1>
+    <div class="card" style="background:var(--orange)">
+      <h3 style="font-size:17px;margin-bottom:6px">Скидка 100% на всё!</h3>
+      <div class="hint" style="color:var(--ink)">Шутка. Платить всё равно придётся, но деньги никуда не уйдут.<br>Цены в юанях, курс ${rateStr} ₽ за ¥.</div>
+    </div>
+    <div class="grid">
+      ${PRODUCTS.map(p=>`
+        <div class="item">
+          ${p.tag?`<span class="tag">${p.tag}</span>`:''}
+          <div class="pic">${p.emoji}</div>
+          <h3>${p.name}</h3>
+          <div class="desc">${p.desc}</div>
+          <div class="row">
+            <div class="price">${p.old?`<s>${fmtY(p.old)}</s><br>`:''}${fmtY(p.price)}<small>${fmt(toRub(p.price))}</small></div>
+            <button class="add" data-add="${p.id}" aria-label="Добавить ${p.name}">+</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderCart(){
+  const ids = Object.keys(cart);
+  if(!ids.length){
+    view.innerHTML = `<h1 class="page-title">🧺 Корзина</h1>
+      <div class="card empty"><div class="big">🕸️</div>
+      <p>Здесь пусто, как в кошельке перед зарплатой.</p>
+      <button class="btn primary" data-tab="catalog">Открыть каталог</button></div>`;
+    return;
+  }
+  view.innerHTML = `<h1 class="page-title">🧺 Корзина</h1>
+    <div class="card">
+      ${ids.map(id=>{const p=byId(+id),q=cart[id];return `
+        <div class="line">
+          <div class="em">${p.emoji}</div>
+          <div class="meta"><b>${p.name}</b><span>${fmtY(p.price)} · ${fmt(toRub(p.price))} × ${q}</span></div>
+          <div class="qty">
+            <button data-dec="${id}" aria-label="Меньше">−</button><span>${q}</span><button data-inc="${id}" aria-label="Больше">+</button>
+          </div>
+        </div>`}).join('')}
+    </div>
+    <div class="card">
+      <div class="sum"><span>Товары в юанях</span><span>${fmtY(cartCny())}</span></div>
+      <div class="sum"><span>Товары в рублях</span><span>${fmt(cartGoods())}</span></div>
+      <div class="sum"><span>Комиссия сервиса</span><span>${fmt(cartFee())}</span></div>
+      <div class="hint" style="margin:-2px 0 4px">${Math.round(FEE_PCT*100)}%, но не меньше ${FEE_MIN} ₽</div>
+      <div class="sum total"><span>Итого</span><span>${fmt(cartTotal())}</span></div>
+    </div>
+    <div style="padding:0 4px;display:grid;gap:14px">
+      <button class="btn primary" data-pay>💳 Оплатить понарошку</button>
+      <button class="btn danger" data-clear>Очистить корзину</button>
+    </div>`;
+}
+
+const STAGES = [
+  {t:0,   p:8,   label:'Заказ выкуплен', icon:'✅'},
+  {t:20,  p:30,  label:'Бобик пакует воздух', icon:'📦'},
+  {t:50,  p:55,  label:'Едет на таможню', icon:'🛃'},
+  {t:90,  p:80,  label:'Застрял в пробке на границе', icon:'🚚'},
+  {t:140, p:100, label:'Доставлено в никуда', icon:'🎉'}
+];
+function stageOf(o){
+  const sec = (Date.now()-o.ts)/1000;
+  let s = STAGES[0]; for(const st of STAGES) if(sec>=st.t) s = st; return s;
+}
+
+function renderOrders(){
+  if(!orders.length){
+    view.innerHTML = `<h1 class="page-title">📋 Мои заказы</h1>
+      <div class="card empty"><div class="big">📭</div><p>Заказов нет. Самое время что-нибудь не купить.</p>
+      <button class="btn primary" data-tab="catalog">В каталог</button></div>`;
+    return;
+  }
+  view.innerHTML = `<h1 class="page-title">📋 Мои заказы</h1>` + orders.map(o=>{
+    const st = stageOf(o);
+    const cnt = o.items.reduce((s,i)=>s+i.q,0);
+    return `<div class="ticket">
+      <div class="head"><h3>Заказ #${o.n}</h3><b>${fmt(o.total)}</b></div>
+      <div class="body">${cnt} тов. · ${fmtY(o.totalCny ?? Math.round(o.total/RATE))} · ${o.note}</div>
+      <div class="names">${o.items.map(i=>`<div>${byId(i.id).emoji} ${byId(i.id).name} × ${i.q}</div>`).join('')}</div>
+      <div class="route"><span>CN</span>
+        <div class="bar"><i style="width:${st.p}%"></i><em style="left:${st.p}%"></em></div>
+        <span>RU</span></div>
+      <div class="center"><span class="pill">${st.icon} ${st.label}</span></div>
+    </div>`;
+  }).join('') + `<div class="center hint">Статусы обновляются сами. Ничего реального не едет.</div>`;
+}
+
+function renderCalc(){
+  view.innerHTML = `<h1 class="page-title">🧮 Калькулятор</h1>
+    <div class="card">
+      <label for="c-price" style="margin-top:0">Цена товара в юанях</label>
+      <input id="c-price" inputmode="decimal" placeholder="1337" autocomplete="off">
+      <label for="c-ship">Доставка по Китаю в юанях</label>
+      <input id="c-ship" inputmode="decimal" placeholder="0" autocomplete="off">
+      <div class="calc-res" id="c-res"></div>
+    </div>
+    <div style="padding:0 4px"><button class="btn" data-tab="catalog">🛍️ Открыть каталог</button></div>`;
+  calcUpdate();
+}
+function calcUpdate(){
+  const p = parseFloat(($('#c-price').value||'0').replace(',','.')) || 0;
+  const s = parseFloat(($('#c-ship').value||'0').replace(',','.')) || 0;
+  const goods = toRub(p+s), fee = feeFor(goods);
+  $('#c-res').innerHTML = `
+    <div class="sum"><span>Товар + доставка</span><span>${fmtY(p+s)}</span></div>
+    <div class="sum"><span>В рублях по ${rateStr}</span><span>${fmt(goods)}</span></div>
+    <div class="sum"><span>Комиссия сервиса</span><span>${fmt(fee)}</span></div>
+    <div class="sum total"><span>Итого</span><span>${fmt(goods+fee)}</span></div>`;
+}
+
+function renderAbout(){
+  view.innerHTML = `<h1 class="page-title">⚙️ Настройки</h1>
+    <div class="card about">
+      <p><b>Бобик Шоп</b> — магазин, в котором всё понарошку: товары, оплата и доставка. Настоящая только любовь к шуткам.</p>
+      <p>Карта не проверяется, деньги не списываются, данные никуда не отправляются. Корзина и заказы хранятся только в вашем телефоне.</p>
+      <span class="stamp">ВОЗВРАТ НЕ НУЖЕН</span>
+      <p style="margin-top:12px">Если вам что-то не пришло, значит, всё работает как задумано.</p>
+    </div>
+    <div style="padding:0 4px"><button class="btn danger" data-reset>Сбросить корзину и заказы</button></div>`;
+}
+
+/* ============ Действия ============ */
+function setTab(t){ tab=t; render(); view.scrollTop=0; haptic(); }
+function addToCart(id){ cart[id]=(cart[id]||0)+1; save('bobik_cart',cart); haptic(); renderNav(); toast(byId(id).emoji+' '+byId(id).name+' в корзине'); }
+function changeQty(id,d){ cart[id]=(cart[id]||0)+d; if(cart[id]<=0) delete cart[id]; save('bobik_cart',cart); haptic(); render(); }
+
+document.addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.dataset.tab) return setTab(b.dataset.tab);
+  if(b.dataset.add) return addToCart(+b.dataset.add);
+  if(b.dataset.inc) return changeQty(b.dataset.inc,1);
+  if(b.dataset.dec) return changeQty(b.dataset.dec,-1);
+  if('clear' in b.dataset){ cart={}; save('bobik_cart',cart); return render(); }
+  if('pay' in b.dataset) return openPay();
+  if('manager' in b.dataset) return openManager();
+  if('reset' in b.dataset){ cart={}; orders=[]; save('bobik_cart',cart); save('bobik_orders',orders); toast('Всё сброшено'); return render(); }
+});
+document.addEventListener('input', e=>{ if(e.target.id==='c-price'||e.target.id==='c-ship') calcUpdate(); });
+
+let toastT;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1400); }
+
+/* ============ Менеджер ============ */
+const overlay = $('#overlay'), sheet = $('#sheet');
+function openSheet(html){ sheet.innerHTML=html; overlay.classList.add('show'); }
+function closeSheet(){ overlay.classList.remove('show'); }
+let busy = false;
+overlay.addEventListener('click', e=>{ if(e.target===overlay && !busy) closeSheet(); });
+
+const FAQ = [
+  ['Где мой заказ?', 'Он выехал из Китая и сразу свернул не туда. Бобик ищет, навигатор молчит.'],
+  ['Можно вернуть товар?', 'Можно, но сначала его надо получить. Это сложная схема, мы работаем над ней.'],
+  ['Почему так дорого?', 'Комиссия 7%, но не меньше 350 ₽. Бобику тоже надо на косточки.'],
+  ['Вы настоящие?', 'Мы настолько же настоящие, насколько настоящий воздух в банке.']
+];
+function openManager(){
+  openSheet(`<h2>💬 Менеджер Бобик</h2>
+    <div class="bubble">Гав! Я на связи. Выберите вопрос, остальные я придумаю сам.</div>
+    <div class="faq">${FAQ.map((f,i)=>`<button data-faq="${i}">${f[0]}</button>`).join('')}</div>
+    <button class="btn" id="mclose">Закрыть</button>`);
+  $('#mclose').onclick = closeSheet;
+  sheet.querySelectorAll('[data-faq]').forEach(b=>b.onclick=()=>{
+    haptic();
+    const i=+b.dataset.faq;
+    b.insertAdjacentHTML('afterend',`<div class="bubble">${FAQ[i][1]}</div>`);
+    b.disabled=true; b.style.opacity=.6;
+  });
+}
+
+/* ============ Оплата ============ */
+function openPay(){
+  const total = cartTotal();
+  openSheet(`
+    <h2>💳 Оплата</h2>
+    <div class="cc">
+      <div class="top"><span>BOBIK BANK</span><span>МИР-ишь</span></div>
+      <div class="num" id="ccnum">4242 4242 4242 4242</div>
+      <div class="bot"><span id="ccname">IVAN BOBIKOV</span><span id="ccexp">12/34</span></div>
+    </div>
+    <label for="f-num">Номер карты</label>
+    <input id="f-num" inputmode="numeric" maxlength="19" value="4242 4242 4242 4242" autocomplete="off">
+    <label for="f-name">Имя на карте</label>
+    <input id="f-name" value="IVAN BOBIKOV" autocomplete="off">
+    <div class="two">
+      <div><label for="f-exp">Срок</label><input id="f-exp" inputmode="numeric" maxlength="5" value="12/34" autocomplete="off"></div>
+      <div><label for="f-cvc">CVC</label><input id="f-cvc" inputmode="numeric" maxlength="3" value="000" autocomplete="off"></div>
+    </div>
+    <p class="hint" style="margin:12px 2px 16px">Данные можно не менять: они вымышленные, а карта не проверяется.</p>
+    <div style="display:grid;gap:14px">
+      <button class="btn primary" id="go">Оплатить ${fmt(total)}</button>
+      <button class="btn" id="cancel">Передумал</button>
+    </div>`);
+  $('#f-num').addEventListener('input',e=>{ e.target.value=e.target.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim(); $('#ccnum').textContent=e.target.value||'•••• •••• •••• ••••'; });
+  $('#f-name').addEventListener('input',e=>{ $('#ccname').textContent=e.target.value.toUpperCase()||'—'; });
+  $('#f-exp').addEventListener('input',e=>{ let v=e.target.value.replace(/\D/g,'').slice(0,4); if(v.length>2) v=v.slice(0,2)+'/'+v.slice(2); e.target.value=v; $('#ccexp').textContent=v||'ММ/ГГ'; });
+  $('#cancel').onclick = closeSheet;
+  $('#go').onclick = runPayment;
+}
+
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+async function runPayment(){
+  busy = true;
+  const willFail = Math.random() < 0.3;
+  const steps = [
+    'Связываемся с банком',
+    'Проверяем, что карта настоящая (нет)',
+    'Спрашиваем разрешения у Бобика',
+    'Списываем деньги (не списываем)'
+  ];
+  openSheet(`<h2>⏳ Обработка платежа</h2>
+    <ul class="steps">${steps.map((s,i)=>`<li id="s${i}"><span class="dot"></span>${s}</li>`).join('')}</ul>`);
+  for(let i=0;i<steps.length;i++){
+    const li = $('#s'+i); li.classList.add('on'); haptic();
+    await sleep(750 + Math.random()*400);
+    if(willFail && i===1){
+      li.classList.add('fail'); li.querySelector('.dot').textContent='✕';
+      await sleep(600);
+      li.insertAdjacentHTML('afterend','<li class="on"><span class="dot">🐶</span>Банк отказал. Бобик оплатил за вас</li>');
+      await sleep(1100);
+    }
+    li.classList.add('done'); li.querySelector('.dot').textContent='✓';
+  }
+  finishOrder(willFail);
+}
+
+function finishOrder(helped){
+  const n = (orders.length ? Math.max(...orders.map(o=>o.n)) : 200) + 1;
+  const items = Object.entries(cart).map(([id,q])=>({id:+id,q}));
+  orders.unshift({
+    n, items, total:cartTotal(), totalCny:cartCny(), ts:Date.now(),
+    note: helped ? 'оплатил Бобик (за вас)' : 'оплачено понарошку'
+  });
+  save('bobik_orders',orders);
+  cart={}; save('bobik_cart',cart);
+  busy = false;
+  hapticOk();
+  openSheet(`<div class="result">
+    <div class="big">🎉</div>
+    <h2 style="margin-top:8px">Заказ #${n} оплачен!</h2>
+    <p>${helped?'Банк отказал, но Бобик великодушно взял платёж на себя.':'Деньги не списались, и это приятно.'}<br>Заказ уже «едет» из Китая в никуда.</p>
+    <div style="display:grid;gap:14px">
+      <button class="btn primary" id="toOrders">Смотреть заказ</button>
+      <button class="btn" id="toShop">Ещё что-нибудь не купить</button>
+    </div></div>`);
+  confetti();
+  $('#toOrders').onclick = ()=>{ closeSheet(); setTab('orders'); };
+  $('#toShop').onclick = ()=>{ closeSheet(); setTab('catalog'); };
+  renderNav();
+}
+
+/* ============ Конфетти ============ */
+function confetti(){
+  const c=$('#fx'), x=c.getContext('2d');
+  c.width=innerWidth; c.height=innerHeight;
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const cols=['#f2ac3d','#3aa56b','#7a5cc4','#c8402f','#a8683a'];
+  const ps=Array.from({length:90},()=>({
+    x:c.width/2, y:c.height*0.55, vx:(Math.random()-.5)*14, vy:-Math.random()*14-4,
+    s:5+Math.random()*6, r:Math.random()*6, vr:(Math.random()-.5)*.4, c:cols[Math.random()*cols.length|0]
+  }));
+  let f=0;
+  (function tick(){
+    x.clearRect(0,0,c.width,c.height);
+    ps.forEach(p=>{
+      p.vy+=.45; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+      x.save(); x.translate(p.x,p.y); x.rotate(p.r);
+      x.fillStyle=p.c; x.strokeStyle='#2a1a12'; x.lineWidth=1.5;
+      x.fillRect(-p.s/2,-p.s/2,p.s,p.s); x.strokeRect(-p.s/2,-p.s/2,p.s,p.s); x.restore();
+    });
+    if(++f<110) requestAnimationFrame(tick); else x.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+/* статусы доставки обновляются, пока открыты «Мои заказы» */
+setInterval(()=>{ if(tab==='orders' && !overlay.classList.contains('show')){ const y=view.scrollTop; renderOrders(); view.scrollTop=y; } }, 5000);
+
+render();
+</script>
+</body>
+</html>
