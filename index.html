@@ -267,7 +267,10 @@ const haptic = (t='light') => { try{ tg && tg.HapticFeedback.impactOccurred(t) }
 const hapticOk = () => { try{ tg && tg.HapticFeedback.notificationOccurred('success') }catch(e){} };
 
 /* ============ Настройки магазина ============ */
-const RATE = 13.15;        // курс юаня, ₽ за 1 ¥
+let RATE = 13.15;          // курс по умолчанию; бот передаёт актуальный в ссылке (?rate=...)
+try{ const q = parseFloat(new URLSearchParams(location.search).get('rate')); if(q>=1 && q<=1000) RATE = q; }catch(e){}
+/* sendData работает только если мини-апп открыт кнопкой клавиатуры бота (не из меню/инлайн) */
+const canSend = !!(tg && tg.initData && tg.sendData && !(tg.initDataUnsafe && tg.initDataUnsafe.query_id));
 const FEE_PCT = 0.07;      // комиссия сервиса 7%
 const FEE_MIN = 350;       // минимум 350 ₽
 
@@ -433,15 +436,19 @@ function renderOrders(){
     const st = stageOf(o);
     const cnt = o.items.reduce((s,i)=>s+i.q,0);
     return `<div class="ticket">
-      <div class="head"><h3>Заказ #${o.n}</h3><b>${fmt(o.total)}</b></div>
+      <div class="head"><h3>Заказ #${o.id ?? o.n}</h3><b>${fmt(o.total)}</b></div>
       <div class="body">${cnt} тов. · ${fmtY(o.totalCny ?? Math.round(o.total/RATE))} · ${o.note}</div>
       <div class="names">${o.items.map(i=>`<div>${byId(i.id).emoji} ${byId(i.id).name} × ${i.q}</div>`).join('')}</div>
       <div class="route"><span>CN</span>
         <div class="bar"><i style="width:${st.p}%"></i><em style="left:${st.p}%"></em></div>
         <span>RU</span></div>
-      <div class="center"><span class="pill">${st.icon} ${st.label}</span></div>
+      <div class="center">${o.sent===false
+        ? `<span class="pill" style="background:#fde2dc">⚠️ Не отправлен менеджеру</span>
+           ${canSend?`<div style="margin-top:12px"><button class="btn primary" data-send="${o.id}">📨 Отправить менеджеру</button></div>`
+                    :`<div class="hint" style="margin-top:10px">Откройте магазин кнопкой «🛍 Открыть магазин» в чате с ботом (/start)</div>`}`
+        : `<span class="pill">${st.icon} ${st.label}</span>`}</div>
     </div>`;
-  }).join('') + `<div class="center hint">Статусы обновляются сами. Ничего реального не едет.</div>`;
+  }).join('') + `<div class="center hint">Решение по заказу (принят, отклонён, отменён) менеджер присылает в чат с ботом.</div>`;
 }
 
 function renderCalc(){
@@ -471,7 +478,7 @@ function renderAbout(){
   view.innerHTML = `<h1 class="page-title">⚙️ Настройки</h1>
     <div class="card about">
       <p><b>Бобик Шоп</b> — магазин, в котором всё понарошку: товары, оплата и доставка. Настоящая только любовь к шуткам.</p>
-      <p>Карта не проверяется, деньги не списываются, данные никуда не отправляются. Корзина и заказы хранятся только в вашем телефоне.</p>
+      <p>Карта не проверяется и никуда не передаётся, деньги не списываются. Менеджеру уходит только состав заказа. Корзина и история хранятся в вашем телефоне.</p>
       <span class="stamp">ВОЗВРАТ НЕ НУЖЕН</span>
       <p style="margin-top:12px">Если вам что-то не пришло, значит, всё работает как задумано.</p>
     </div>
@@ -490,6 +497,7 @@ document.addEventListener('click', e=>{
   if(b.dataset.inc) return changeQty(b.dataset.inc,1);
   if(b.dataset.dec) return changeQty(b.dataset.dec,-1);
   if('clear' in b.dataset){ cart={}; save('bobik_cart',cart); return render(); }
+  if(b.dataset.send){ const o=orders.find(x=>String(x.id)===b.dataset.send); if(o) sendOrder(o); return; }
   if('pay' in b.dataset) return openPay();
   if('manager' in b.dataset) return openManager();
   if('reset' in b.dataset){ cart={}; orders=[]; save('bobik_cart',cart); save('bobik_orders',orders); toast('Всё сброшено'); return render(); }
@@ -583,26 +591,44 @@ async function runPayment(){
   finishOrder(willFail);
 }
 
+const newId = () => 'B' + Date.now().toString(36).slice(-4).toUpperCase() + Math.random().toString(36).slice(2,4).toUpperCase();
+
+function sendOrder(o){
+  if(!canSend){ toast('Откройте магазин кнопкой в чате с ботом'); return; }
+  const payload = {
+    t:'order', id:o.id, rate:o.rate ?? RATE,
+    items:o.items.map(i=>({n:byId(i.id).emoji+' '+byId(i.id).name, q:i.q, p:byId(i.id).price}))
+  };
+  o.sent = true; save('bobik_orders',orders);          // sendData закрывает приложение, поэтому помечаем заранее
+  try{ tg.sendData(JSON.stringify(payload)); }
+  catch(e){ o.sent=false; save('bobik_orders',orders); toast('Не удалось отправить'); }
+}
+
 function finishOrder(helped){
-  const n = (orders.length ? Math.max(...orders.map(o=>o.n)) : 200) + 1;
-  const items = Object.entries(cart).map(([id,q])=>({id:+id,q}));
-  orders.unshift({
-    n, items, total:cartTotal(), totalCny:cartCny(), ts:Date.now(),
+  const id = newId();
+  const items = Object.entries(cart).map(([pid,q])=>({id:+pid,q}));
+  const o = {
+    id, items, total:cartTotal(), totalCny:cartCny(), rate:RATE, ts:Date.now(), sent:false,
     note: helped ? 'оплатил Бобик (за вас)' : 'оплачено понарошку'
-  });
+  };
+  orders.unshift(o);
   save('bobik_orders',orders);
   cart={}; save('bobik_cart',cart);
   busy = false;
   hapticOk();
   openSheet(`<div class="result">
     <div class="big">🎉</div>
-    <h2 style="margin-top:8px">Заказ #${n} оплачен!</h2>
-    <p>${helped?'Банк отказал, но Бобик великодушно взял платёж на себя.':'Деньги не списались, и это приятно.'}<br>Заказ уже «едет» из Китая в никуда.</p>
+    <h2 style="margin-top:8px">Заказ #${id} оформлен!</h2>
+    <p>${helped?'Банк отказал, но Бобик великодушно взял платёж на себя.':'Деньги не списались, и это приятно.'}<br>
+    ${canSend?'Осталось отправить заказ менеджеру. После нажатия приложение закроется, ответ придёт в чат.'
+             :'⚠️ Чтобы заказ дошёл до менеджера, откройте магазин кнопкой «🛍 Открыть магазин» в чате с ботом (/start).'}</p>
     <div style="display:grid;gap:14px">
-      <button class="btn primary" id="toOrders">Смотреть заказ</button>
+      ${canSend?'<button class="btn primary" id="toSend">📨 Отправить менеджеру</button>':''}
+      <button class="btn ${canSend?'':'primary'}" id="toOrders">Смотреть заказ</button>
       <button class="btn" id="toShop">Ещё что-нибудь не купить</button>
     </div></div>`);
   confetti();
+  if(canSend) $('#toSend').onclick = ()=>sendOrder(o);
   $('#toOrders').onclick = ()=>{ closeSheet(); setTab('orders'); };
   $('#toShop').onclick = ()=>{ closeSheet(); setTab('catalog'); };
   renderNav();
